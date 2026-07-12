@@ -6,6 +6,12 @@
     <title>Dashboard - Aplikasi Kas MWW</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        // Proteksi: Jika belum login, tendang kembali ke index.html
+        if (!sessionStorage.getItem("isLoggedIn")) {
+            window.location.href = "index.html";
+        }
+    </script>
 </head>
 <body class="bg-slate-100 min-h-screen flex">
 
@@ -24,9 +30,10 @@
             <a href="#" class="block p-3 hover:bg-teal-700 rounded-lg"><i class="fa fa-file-invoice mr-2"></i> Laporan</a>
         </nav>
 
-        <a href="index.html" class="block p-3 text-red-300 hover:text-white rounded-lg border border-teal-700 mt-auto">
+        <button onclick="sessionStorage.removeItem('isLoggedIn'); window.location.href='index.html';" 
+                class="w-full p-3 text-red-300 hover:text-white rounded-lg border border-teal-700 mt-auto text-left">
             <i class="fa fa-sign-out mr-2"></i> Logout
-        </a>
+        </button>
     </aside>
 
     <main class="flex-1 p-8">
@@ -49,6 +56,5 @@
             </div>
         </div>
     </main>
-
 </body>
 </html>
