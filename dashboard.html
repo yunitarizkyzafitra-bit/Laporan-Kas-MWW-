@@ -7,58 +7,48 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-slate-100 min-h-screen">
+<body class="bg-slate-100 min-h-screen flex">
 
-    <nav class="bg-teal-700 text-white p-4 shadow-md">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="font-bold text-lg">Kas DPW Muslimah Wahdah</h1>
-            <button onclick="window.location.href='index.html'" class="text-sm bg-teal-800 px-4 py-2 rounded-lg hover:bg-teal-900">Logout</button>
+    <aside class="w-64 bg-teal-800 text-white p-6 flex flex-col">
+        <div class="mb-10 text-center">
+            <img src="https://raw.githubusercontent.com/yunitarizkyzafitra-bit/Laporan-Kas-MWW-/main/logo-mww.png" 
+                 alt="Logo MWW" 
+                 class="w-20 h-20 mx-auto mb-4 object-contain bg-white p-2 rounded-full shadow-lg">
+            <h2 class="font-bold text-sm">MWW Sulawesi Tengah</h2>
         </div>
-    </nav>
 
-    <div class="container mx-auto p-6">
+        <nav class="space-y-2 flex-grow">
+            <a href="#" class="block p-3 bg-teal-900 rounded-lg"><i class="fa fa-home mr-2"></i> Dashboard</a>
+            <a href="#" class="block p-3 hover:bg-teal-700 rounded-lg"><i class="fa fa-wallet mr-2"></i> Kas Masuk</a>
+            <a href="#" class="block p-3 hover:bg-teal-700 rounded-lg"><i class="fa fa-arrow-up mr-2"></i> Kas Keluar</a>
+            <a href="#" class="block p-3 hover:bg-teal-700 rounded-lg"><i class="fa fa-file-invoice mr-2"></i> Laporan</a>
+        </nav>
+
+        <a href="index.html" class="block p-3 text-red-300 hover:text-white rounded-lg border border-teal-700 mt-auto">
+            <i class="fa fa-sign-out mr-2"></i> Logout
+        </a>
+    </aside>
+
+    <main class="flex-1 p-8">
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-2xl font-bold text-teal-900">Selamat Datang, Admin</h1>
+        </header>
+
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                 <h2 class="text-slate-500 text-sm font-semibold">Total Saldo</h2>
                 <p class="text-2xl font-bold text-teal-700 mt-2">Rp 5.000.000</p>
             </div>
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-slate-500 text-sm font-semibold">Pemasukan Bulan Ini</h2>
+                <h2 class="text-slate-500 text-sm font-semibold">Pemasukan</h2>
                 <p class="text-2xl font-bold text-green-600 mt-2">Rp 1.200.000</p>
             </div>
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-slate-500 text-sm font-semibold">Pengeluaran Bulan Ini</h2>
+                <h2 class="text-slate-500 text-sm font-semibold">Pengeluaran</h2>
                 <p class="text-2xl font-bold text-red-600 mt-2">Rp 800.000</p>
             </div>
         </div>
-
-        <div class="mt-8 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-            <h3 class="font-bold text-lg mb-4">Riwayat Transaksi</h3>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="text-slate-400 text-xs uppercase border-b">
-                            <th class="pb-3">Tanggal</th>
-                            <th class="pb-3">Keterangan</th>
-                            <th class="pb-3">Jumlah</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr class="border-b">
-                            <td class="py-4">12/07/2026</td>
-                            <td class="py-4">Infaq Anggota</td>
-                            <td class="py-4 text-green-600 font-bold">+ Rp 100.000</td>
-                        </tr>
-                        <tr class="border-b">
-                            <td class="py-4">10/07/2026</td>
-                            <td class="py-4">Pembelian ATK</td>
-                            <td class="py-4 text-red-600 font-bold">- Rp 50.000</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+    </main>
 
 </body>
 </html>
