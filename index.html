@@ -11,14 +11,14 @@
 
     <div id="screen-login" class="min-h-screen flex flex-col items-center justify-center p-4 bg-teal-50">
         <img src="logo-mww-png.png" alt="Logo MWW" class="w-20 h-20 mb-3 object-contain">
-        <form id="form-login" class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm border border-teal-100">
-            <input type="text" id="login-username" placeholder="Username" required class="w-full p-3 mb-4 bg-slate-50 border rounded-xl text-xs font-bold">
+        <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm border border-teal-100">
+            <input type="text" id="login-username" placeholder="Username" class="w-full p-3 mb-4 bg-slate-50 border rounded-xl text-xs font-bold">
             <div class="relative mb-6">
-                <input type="password" id="login-password" placeholder="Password" required class="w-full p-3 bg-slate-50 border rounded-xl text-xs font-bold">
+                <input type="password" id="login-password" placeholder="Password" class="w-full p-3 bg-slate-50 border rounded-xl text-xs font-bold">
                 <i id="icon-mata" class="fa-solid fa-eye absolute right-4 top-4 cursor-pointer text-slate-400" onclick="togglePassword()"></i>
             </div>
             <button type="button" onclick="prosesLogin()" class="w-full bg-teal-600 text-white font-bold p-3 rounded-xl text-xs uppercase">MASUK</button>
-        </form>
+        </div>
     </div>
 
     <div id="screen-dashboard" class="hidden p-6 bg-slate-50 min-h-screen">
@@ -55,12 +55,18 @@
         function prosesLogin() {
             var u = document.getElementById('login-username').value;
             var p = document.getElementById('login-password').value;
-            google.script.run.withSuccessHandler(function(valid) {
+            
+            // Indikator tombol ditekan
+            alert("Memproses login..."); 
+
+            google.script.run
+            .withFailureHandler(function(msg) { alert("Error: " + msg); })
+            .withSuccessHandler(function(valid) {
                 if(valid) {
                     document.getElementById('screen-login').classList.add('hidden');
                     document.getElementById('screen-dashboard').classList.remove('hidden');
                     loadDashboard();
-                } else { alert("Login Gagal!"); }
+                } else { alert("Username atau Password salah!"); }
             }).cekLogin(u, p);
         }
 
@@ -81,6 +87,7 @@
         }
 
         function exportPDF() {
+            alert("Sedang membuat PDF...");
             google.script.run.withSuccessHandler(function(url) { window.open(url, '_blank'); }).createPDF();
         }
     </script>
