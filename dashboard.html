@@ -11,11 +11,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
         if (!sessionStorage.getItem("isLoggedIn")) window.location.href = "index.html";
-        const API_URL = "https://script.google.com/macros/s/AKfycbx3lCmiHla36svkhJM6QJNWwA2KzqVxGwHt03rfpvKo9RX3JLg0ZrdMaf8_coA1yt2j6w/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbwvtsmrsljID6sUven9zhLJW7y0zPt7tgK9Ir8HcuWZBHm7KWxwtJKqoQKwxLnce4adDA/exec";
     </script>
     <style>
         @media (max-width: 768px) { .table-container { overflow-x: auto; } }
-        /* Memastikan teks sidebar rapi dan tidak merusak layout */
         .sidebar-text { word-wrap: break-word; overflow-wrap: break-word; }
     </style>
 </head>
@@ -39,8 +38,7 @@
         </div>
 
         <div class="mb-6">
-            <select id="bulanFilter" onchange="loadRiwayat(1)" class="w-full md:w-auto p-3 bg-white border border-teal-200 rounded-xl text-teal-900 font-bold cursor-pointer">
-            </select>
+            <select id="bulanFilter" onchange="loadRiwayat(1)" class="w-full md:w-auto p-3 bg-white border border-teal-200 rounded-xl text-teal-900 font-bold cursor-pointer"></select>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
@@ -95,73 +93,65 @@
         const daftarBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
         const select = document.getElementById('bulanFilter');
         daftarBulan.forEach((m, i) => { select.innerHTML += `<option value="${i+1}">${m} 2026</option>`; });
-        select.value = 5; // Default ke Mei
+        select.value = 5; // Default Mei
 
         let kasChart = new Chart(document.getElementById('kasChart').getContext('2d'), { type: 'bar', data: { labels: ['Kredit', 'Debit'], datasets: [{ data: [0, 0], backgroundColor: ['#15803d', '#be123c'] }] } });
 
         async function loadRiwayat(page = 1) {
             const bulan = document.getElementById('bulanFilter').value;
-            const res = await fetch(`${API_URL}?action=getRiwayat&page=${page}&bulan=${bulan}`);
-            const resData = await res.json();
-            
-            let sumD = 0, sumK = 0;
-            if (resData.data && resData.data.length > 0) {
-                document.getElementById('tabel-riwayat').innerHTML = resData.data.map(row => {
-                    sumD += parseFloat(row[3] || 0); sumK += parseFloat(row[4] || 0);
-                    return `<tr class="border-b text-sm md:text-base"><td class="p-3">${row[0]}</td><td class="p-3">${row[1]}</td><td class="p-3">${row[2]}</td><td class="p-3 text-red-600">${row[3]?Number(row[3]).toLocaleString():'-'}</td><td class="p-3 text-green-600">${row[4]?Number(row[4]).toLocaleString():'-'}</td></tr>`;
-                }).join('');
-            } else {
-                document.getElementById('tabel-riwayat').innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">Belum ada transaksi di bulan ini</td></tr>';
-            }
-            
-            // Perhitungan Dashboard
-            document.getElementById('total-debit').innerText = 'Rp ' + sumD.toLocaleString();
-            document.getElementById('total-kredit').innerText = 'Rp ' + sumK.toLocaleString();
-            document.getElementById('val-debit').innerText = sumD.toLocaleString();
-            document.getElementById('val-kredit').innerText = sumK.toLocaleString();
-            document.getElementById('val-akhir').innerText = (16152981 + sumK - sumD).toLocaleString();
-            
-            const total = sumD + sumK;
-            document.getElementById('stat-kredit-pct').innerText = total > 0 ? Math.round((sumK/total)*100) + '%' : '0%';
-            document.getElementById('stat-debit-pct').innerText = total > 0 ? Math.round((sumD/total)*100) + '%' : '0%';
-
-            kasChart.data.datasets[0].data = [sumK, sumD];
-            kasChart.update();
+            try {
+                const res = await fetch(`${API_URL}?action=getRiwayat&bulan=${bulan}`);
+                const resData = await res.json();
+                let sumD = 0, sumK = 0;
+                
+                if (resData.data && resData.data.length > 0) {
+                    document.getElementById('tabel-riwayat').innerHTML = resData.data.map(row => {
+                        sumD += parseFloat(row[3] || 0); sumK += parseFloat(row[4] || 0);
+                        return `<tr class="border-b"><td class="p-3">${row[0]}</td><td class="p-3">${row[1]}</td><td class="p-3">${row[2]}</td><td class="p-3 text-red-600">${Number(row[3]).toLocaleString()}</td><td class="p-3 text-green-600">${Number(row[4]).toLocaleString()}</td></tr>`;
+                    }).join('');
+                }
+                
+                document.getElementById('total-debit').innerText = 'Rp ' + sumD.toLocaleString();
+                document.getElementById('total-kredit').innerText = 'Rp ' + sumK.toLocaleString();
+                document.getElementById('val-debit').innerText = sumD.toLocaleString();
+                document.getElementById('val-kredit').innerText = sumK.toLocaleString();
+                document.getElementById('val-akhir').innerText = (16152981 + sumK - sumD).toLocaleString();
+                
+                kasChart.data.datasets[0].data = [sumK, sumD];
+                kasChart.update();
+            } catch(e) { console.error("Gagal memuat data", e); }
         }
 
         async function exportPDF() {
             const bulan = document.getElementById('bulanFilter').value;
-            const res = await fetch(`${API_URL}?action=getRiwayat&page=all&bulan=${bulan}`);
+            const res = await fetch(`${API_URL}?action=getRiwayat&bulan=${bulan}`);
             const resData = await res.json();
-            if (!resData.data || resData.data.length === 0) { alert("Tidak ada data untuk diekspor!"); return; }
+            if(!resData.data) return;
             
-            let rows = resData.data.map(row => `<tr><td>${row[0]}</td><td>${row[1]}</td><td>${row[2]}</td><td>${row[3]}</td><td>${row[4]}</td></tr>`).join('');
+            let rows = resData.data.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td></tr>`).join('');
             let div = document.createElement('div');
             div.style.padding = '20px';
-            div.innerHTML = `<h3>Laporan Kas ${daftarBulan[bulan-1]} 2026</h3><table border="1" width="100%"><thead><tr><th>Tanggal</th><th>Uraian</th><th>Ket</th><th>Debit</th><th>Kredit</th></tr></thead><tbody>${rows}</tbody></table>`;
+            div.innerHTML = `<h3>Laporan Kas ${daftarBulan[bulan-1]} 2026</h3><table border="1" width="100%">${rows}</table>`;
+            document.body.appendChild(div);
             
+            const canvas = await html2canvas(div);
             const { jsPDF } = window.jspdf;
-            const canvas = await html2canvas(div, { scale: 2 });
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 10, 190, 0);
-            pdf.save(`Laporan_Kas_${daftarBulan[bulan-1]}.pdf`);
+            const pdf = new jsPDF();
+            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 10, 180, 0);
+            pdf.save("Laporan_Kas.pdf");
+            document.body.removeChild(div);
         }
 
         document.getElementById('form-transaksi').onsubmit = (e) => {
             e.preventDefault();
-            const fd = new FormData();
-            fd.append('tgl', document.getElementById('tgl').value);
-            fd.append('uraian', document.getElementById('uraian').value);
-            fd.append('ket', document.getElementById('ket').value);
-            fd.append('jenis', document.getElementById('jenis').value);
-            fd.append('jml', document.getElementById('jml').value);
+            const fd = new FormData(document.getElementById('form-transaksi'));
             fetch(API_URL, {method: 'POST', body: fd}).then(() => { alert("Data tersimpan!"); location.reload(); });
         };
 
         function filterTabel() {
             let input = document.getElementById("searchInput").value.toLowerCase();
             let tr = document.getElementById("tabel-riwayat").getElementsByTagName("tr");
-            for (let i = 0; i < tr.length; i++) { tr[i].style.display = tr[i].getElementsByTagName("td")[1].innerText.toLowerCase().indexOf(input) > -1 ? "" : "none"; }
+            for (let i = 0; i < tr.length; i++) { tr[i].style.display = tr[i].getElementsByTagName("td")[1].innerText.toLowerCase().includes(input) ? "" : "none"; }
         }
 
         loadRiwayat();
