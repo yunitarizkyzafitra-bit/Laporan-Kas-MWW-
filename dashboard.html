@@ -11,17 +11,19 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
         if (!sessionStorage.getItem("isLoggedIn")) window.location.href = "index.html";
-        const API_URL = "https://script.google.com/macros/s/AKfycbxGi7liCPemVFMTgXf8yw8oMuP2uyr0Rm46K4RDuV5KbkfX7i2HZ5950dcR5quMltAlCw/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbwYHnnCfDMCmKemmclc4C8DW6s_fFQfgSeC6HW7rYYJszZwaaFArupmPO20lTQjeuVfsQ/exec";
     </script>
     <style>
         @media (max-width: 768px) { .table-container { overflow-x: auto; } }
+        /* Memastikan teks sidebar tidak meluber */
+        .sidebar-text { word-wrap: break-word; overflow-wrap: break-word; }
     </style>
 </head>
 <body class="bg-slate-50 md:flex min-h-screen">
     <aside class="w-full md:w-72 bg-teal-800 text-white p-6 flex flex-col shadow-2xl">
         <div class="text-center mb-8">
             <img src="https://raw.githubusercontent.com/yunitarizkyzafitra-bit/Laporan-Kas-MWW-/main/logo-mww.png" class="w-16 mx-auto mb-4 bg-white p-2 rounded-2xl shadow-xl">
-            <h2 class="font-bold text-lg whitespace-nowrap">DPW MUSLIMAH WAHDAH WILAYAH SULAWESI TENGAH</h2>
+            <h2 class="font-bold text-lg sidebar-text px-2">DPW MUSLIMAH WAHDAH WILAYAH SULAWESI TENGAH</h2>
         </div>
         <nav class="space-y-2 flex-grow">
             <a href="#" class="block p-4 bg-teal-900 rounded-2xl font-semibold"><i class="fa fa-chart-line mr-3"></i> Dashboard</a>
@@ -128,16 +130,15 @@
             
             let rows = resData.data.map(row => `<tr><td>${row[0]}</td><td>${row[1]}</td><td>${row[2]}</td><td>${row[3]}</td><td>${row[4]}</td></tr>`).join('');
             let div = document.createElement('div');
-            div.innerHTML = `<h3>Laporan Kas ${daftarBulan[bulan-1]}</h3><table border="1"><thead><tr><th>Tgl</th><th>Uraian</th><th>Ket</th><th>Debit</th><th>Kredit</th></tr></thead><tbody>${rows}</tbody></table>`;
-            document.body.appendChild(div);
+            div.style.padding = '20px';
+            div.innerHTML = `<h3>Laporan Kas ${daftarBulan[bulan-1]} 2026</h3><table border="1" width="100%"><thead><tr><th>Tgl</th><th>Uraian</th><th>Ket</th><th>Debit</th><th>Kredit</th></tr></thead><tbody>${rows}</tbody></table>`;
             
             const { jsPDF } = window.jspdf;
             const canvas = await html2canvas(div, { scale: 2 });
             const pdf = new jsPDF('p', 'mm', 'a4');
-            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 10, 180, 0);
+            const imgData = canvas.toDataURL('image/png');
+            pdf.addImage(imgData, 'PNG', 10, 10, 190, 0);
             pdf.save("Laporan_Kas_Full.pdf");
-            
-            document.body.removeChild(div);
         }
 
         document.getElementById('form-transaksi').onsubmit = (e) => {
@@ -148,7 +149,10 @@
             fd.append('ket', document.getElementById('ket').value);
             fd.append('jenis', document.getElementById('jenis').value);
             fd.append('jml', document.getElementById('jml').value);
-            fetch(API_URL, {method: 'POST', mode: 'no-cors', body: fd}).then(() => { alert("Berhasil!"); location.reload(); });
+            
+            fetch(API_URL, {method: 'POST', body: fd})
+            .then(() => { alert("Data berhasil dikirim!"); location.reload(); })
+            .catch(() => alert("Terjadi kesalahan, silakan coba lagi."));
         };
 
         function filterTabel() {
