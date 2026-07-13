@@ -11,7 +11,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
         if (!sessionStorage.getItem("isLoggedIn")) window.location.href = "index.html";
-        const API_URL = "https://script.google.com/macros/s/AKfycbwOjc6-XjjR7U429Z57Ot6E-Fo5qBJx0oCEoikihVM_GIQ0pzsYj1VH4anwpP2VYzloaQ/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbz11pejVkN2Z4xmjZrhMIUMV7veFuUNJIBqQLDomw-x1GZXl0F3JT-j5Kc_OdNWx9k-aA/exec";
     </script>
     <style>
         @media (max-width: 768px) { .table-container { overflow-x: auto; } }
@@ -104,7 +104,6 @@
                 return `<tr class="border-b text-sm md:text-base"><td class="p-3">${row[0]}</td><td class="p-3">${row[1]}</td><td class="p-3">${row[2]}</td><td class="p-3 text-red-600">${row[3]?Number(row[3]).toLocaleString():'-'}</td><td class="p-3 text-green-600">${row[4]?Number(row[4]).toLocaleString():'-'}</td></tr>`;
             }).join('');
             
-            // Update Statistik & Persentase
             const total = sumD + sumK;
             document.getElementById('stat-kredit-pct').innerText = total > 0 ? Math.round((sumK/total)*100) + '%' : '0%';
             document.getElementById('stat-debit-pct').innerText = total > 0 ? Math.round((sumD/total)*100) + '%' : '0%';
@@ -123,12 +122,24 @@
         }
 
         async function exportPDF() {
+            const bulan = document.getElementById('bulanFilter').value;
+            // Fetch SEMUA data untuk bulan yang dipilih
+            const res = await fetch(`${API_URL}?action=getRiwayat&page=all&bulan=${bulan}`);
+            const resData = await res.json();
+            
+            // Buat tabel sementara di memori untuk dicetak
+            let rows = resData.data.map(row => `<tr><td>${row[0]}</td><td>${row[1]}</td><td>${row[2]}</td><td>${row[3]}</td><td>${row[4]}</td></tr>`).join('');
+            let div = document.createElement('div');
+            div.innerHTML = `<h3>Laporan Kas ${daftarBulan[bulan-1]}</h3><table border="1"><thead><tr><th>Tgl</th><th>Uraian</th><th>Ket</th><th>Debit</th><th>Kredit</th></tr></thead><tbody>${rows}</tbody></table>`;
+            document.body.appendChild(div);
+            
             const { jsPDF } = window.jspdf;
-            const canvas = await html2canvas(document.querySelector('main'), { scale: 2 });
+            const canvas = await html2canvas(div, { scale: 2 });
             const pdf = new jsPDF('p', 'mm', 'a4');
-            const w = pdf.internal.pageSize.getWidth();
-            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, w, (canvas.height * w) / canvas.width);
-            pdf.save("Laporan_Kas_MWW.pdf");
+            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 10, 180, 0);
+            pdf.save("Laporan_Kas_Full.pdf");
+            
+            document.body.removeChild(div);
         }
 
         document.getElementById('form-transaksi').onsubmit = (e) => {
@@ -139,7 +150,7 @@
             fd.append('ket', document.getElementById('ket').value);
             fd.append('jenis', document.getElementById('jenis').value);
             fd.append('jml', document.getElementById('jml').value);
-            fetch(API_URL, {method: 'POST', body: fd}).then(() => { alert("Berhasil!"); location.reload(); });
+            fetch(API_URL, {method: 'POST', mode: 'no-cors', body: fd}).then(() => { alert("Berhasil!"); location.reload(); });
         };
 
         function filterTabel() {
