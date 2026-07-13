@@ -10,7 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
         if (!sessionStorage.getItem("isLoggedIn")) window.location.href = "index.html";
-        const API_URL = "https://script.google.com/macros/s/AKfycbzyC37fZiOi8d45XNq9Cu_iN5EuIhQRUR73N8pAfO0LiesgWgADHKvdfOKzS6vDuMKGfQ/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbyEEMvlUO5yEVcGwzFgKCfqQz5wmGGxjk2O5sy2qSRjwjRz9n_2LqSAW7nYSY9nRRIaCg/exec";
     </script>
 </head>
 <body class="bg-slate-50 flex min-h-screen">
@@ -40,10 +40,10 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
             <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
                 <table class="w-full text-left">
-                    <tr><td>Saldo Awal</td><td class="text-right font-bold">16,152,981</td></tr>
-                    <tr class="text-green-700"><td>Total Kredit</td><td class="text-right font-bold">47,863,000</td></tr>
-                    <tr class="text-red-700"><td>Total Debit</td><td class="text-right font-bold">48,304,763</td></tr>
-                    <tr class="bg-teal-900 text-white p-4 rounded-xl"><td>Saldo Akhir</td><td class="text-right font-bold">15,711,218</td></tr>
+                    <tr><td>Saldo Awal</td><td id="val-awal" class="text-right font-bold">16,152,981</td></tr>
+                    <tr class="text-green-700"><td>Total Kredit</td><td id="val-kredit" class="text-right font-bold">47,863,000</td></tr>
+                    <tr class="text-red-700"><td>Total Debit</td><td id="val-debit" class="text-right font-bold">48,304,763</td></tr>
+                    <tr class="bg-teal-900 text-white p-4 rounded-xl"><td>Saldo Akhir</td><td id="val-akhir" class="text-right font-bold">15,711,218</td></tr>
                 </table>
             </div>
             <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100"><canvas id="kasChart"></canvas></div>
@@ -84,13 +84,25 @@
             const bulan = document.getElementById('bulanFilter').value;
             const res = await fetch(`${API_URL}?action=getRiwayat&page=${page}&bulan=${bulan}`);
             const resData = await res.json();
+            
             let sumD = 0, sumK = 0;
             document.getElementById('tabel-riwayat').innerHTML = resData.data.map(row => {
                 sumD += parseFloat(row[3] || 0); sumK += parseFloat(row[4] || 0);
                 return `<tr class="border-b"><td class="p-3">${row[0]}</td><td class="p-3">${row[1]}</td><td class="p-3">${row[2]}</td><td class="p-3 text-red-600">${row[3]?Number(row[3]).toLocaleString():'-'}</td><td class="p-3 text-green-600">${row[4]?Number(row[4]).toLocaleString():'-'}</td></tr>`;
             }).join('');
+            
+            // Update Tfoot
             document.getElementById('total-debit').innerText = 'Rp ' + sumD.toLocaleString();
             document.getElementById('total-kredit').innerText = 'Rp ' + sumK.toLocaleString();
+            
+            // Update Dashboard Statis (Bisa dihubungkan ke perhitungan server jika diperlukan)
+            document.getElementById('val-debit').innerText = sumD.toLocaleString();
+            document.getElementById('val-kredit').innerText = sumK.toLocaleString();
+            document.getElementById('val-akhir').innerText = (16152981 + sumK - sumD).toLocaleString();
+
+            // Update Grafik
+            kasChart.data.datasets[0].data = [sumK, sumD];
+            kasChart.update();
             
             const pagDiv = document.getElementById('pagination');
             pagDiv.innerHTML = Array.from({length: resData.total}, (_, i) => i + 1)
