@@ -11,13 +11,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
         if (!sessionStorage.getItem("isLoggedIn")) window.location.href = "index.html";
-        const API_URL = "https://script.google.com/macros/s/AKfycbzkTxL-4IORjK0JEILmnKwU6E0d52wDlIls9eB1V_hBvVF1D6AvcnEySzAg__BbaElctw/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbx9oGCPykhiH9PptHcnvwLrBPK7v_LAjXSHyN0rG3rJOsR7muaeFpGcZuM-mGhIA5mm5g/exec";
     </script>
     <style>
-        /* Memastikan tabel bisa di-scroll di HP */
-        @media (max-width: 768px) {
-            .table-container { overflow-x: auto; }
-        }
+        @media (max-width: 768px) { .table-container { overflow-x: auto; } }
     </style>
 </head>
 <body class="bg-slate-50 md:flex min-h-screen">
@@ -39,8 +36,17 @@
             <button onclick="exportPDF()" class="w-full md:w-auto bg-teal-900 text-white px-6 py-3 rounded-xl hover:bg-teal-800 transition"><i class="fa fa-file-pdf mr-2"></i> Export PDF</button>
         </div>
 
-        <div class="mb-6">
-            <select id="bulanFilter" onchange="loadRiwayat(1)" class="w-full md:w-auto p-3 bg-white border border-teal-200 rounded-xl text-teal-900 font-bold cursor-pointer"></select>
+        <div class="mb-6"><select id="bulanFilter" onchange="loadRiwayat(1)" class="w-full md:w-auto p-3 bg-white border border-teal-200 rounded-xl text-teal-900 font-bold cursor-pointer"></select></div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <div class="bg-gradient-to-r from-emerald-600 to-teal-700 p-6 rounded-3xl text-white shadow-lg">
+                <p class="text-emerald-100">Pendapatan (Kredit)</p>
+                <h3 id="stat-kredit-pct" class="text-3xl font-bold">0%</h3>
+            </div>
+            <div class="bg-gradient-to-r from-red-600 to-rose-700 p-6 rounded-3xl text-white shadow-lg">
+                <p class="text-rose-100">Pengeluaran (Debit)</p>
+                <h3 id="stat-debit-pct" class="text-3xl font-bold">0%</h3>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
@@ -81,7 +87,6 @@
     </main>
 
     <script>
-        // (Semua logika JS tetap sama, saya hanya menambahkan class responsif di atas)
         const daftarBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
         const select = document.getElementById('bulanFilter');
         daftarBulan.forEach((m, i) => { select.innerHTML += `<option value="${i+1}">${m} 2026</option>`; });
@@ -98,11 +103,18 @@
                 sumD += parseFloat(row[3] || 0); sumK += parseFloat(row[4] || 0);
                 return `<tr class="border-b text-sm md:text-base"><td class="p-3">${row[0]}</td><td class="p-3">${row[1]}</td><td class="p-3">${row[2]}</td><td class="p-3 text-red-600">${row[3]?Number(row[3]).toLocaleString():'-'}</td><td class="p-3 text-green-600">${row[4]?Number(row[4]).toLocaleString():'-'}</td></tr>`;
             }).join('');
+            
+            // Update Statistik & Persentase
+            const total = sumD + sumK;
+            document.getElementById('stat-kredit-pct').innerText = total > 0 ? Math.round((sumK/total)*100) + '%' : '0%';
+            document.getElementById('stat-debit-pct').innerText = total > 0 ? Math.round((sumD/total)*100) + '%' : '0%';
+            
             document.getElementById('total-debit').innerText = 'Rp ' + sumD.toLocaleString();
             document.getElementById('total-kredit').innerText = 'Rp ' + sumK.toLocaleString();
             document.getElementById('val-debit').innerText = sumD.toLocaleString();
             document.getElementById('val-kredit').innerText = sumK.toLocaleString();
             document.getElementById('val-akhir').innerText = (16152981 + sumK - sumD).toLocaleString();
+            
             kasChart.data.datasets[0].data = [sumK, sumD];
             kasChart.update();
             const pagDiv = document.getElementById('pagination');
