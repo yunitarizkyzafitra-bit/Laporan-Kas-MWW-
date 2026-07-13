@@ -11,7 +11,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
         if (!sessionStorage.getItem("isLoggedIn")) window.location.href = "index.html";
-        const API_URL = "https://script.google.com/macros/s/AKfycbz11pejVkN2Z4xmjZrhMIUMV7veFuUNJIBqQLDomw-x1GZXl0F3JT-j5Kc_OdNWx9k-aA/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbxGi7liCPemVFMTgXf8yw8oMuP2uyr0Rm46K4RDuV5KbkfX7i2HZ5950dcR5quMltAlCw/exec";
     </script>
     <style>
         @media (max-width: 768px) { .table-container { overflow-x: auto; } }
@@ -21,7 +21,7 @@
     <aside class="w-full md:w-72 bg-teal-800 text-white p-6 flex flex-col shadow-2xl">
         <div class="text-center mb-8">
             <img src="https://raw.githubusercontent.com/yunitarizkyzafitra-bit/Laporan-Kas-MWW-/main/logo-mww.png" class="w-16 mx-auto mb-4 bg-white p-2 rounded-2xl shadow-xl">
-            <h2 class="font-bold text-lg">DPW MUSLIMAH WAHDAH WILAYAH SULAWESI TENGAH</h2>
+            <h2 class="font-bold text-lg whitespace-nowrap">DPW MUSLIMAH WAHDAH WILAYAH SULAWESI TENGAH</h2>
         </div>
         <nav class="space-y-2 flex-grow">
             <a href="#" class="block p-4 bg-teal-900 rounded-2xl font-semibold"><i class="fa fa-chart-line mr-3"></i> Dashboard</a>
@@ -123,11 +123,9 @@
 
         async function exportPDF() {
             const bulan = document.getElementById('bulanFilter').value;
-            // Fetch SEMUA data untuk bulan yang dipilih
             const res = await fetch(`${API_URL}?action=getRiwayat&page=all&bulan=${bulan}`);
             const resData = await res.json();
             
-            // Buat tabel sementara di memori untuk dicetak
             let rows = resData.data.map(row => `<tr><td>${row[0]}</td><td>${row[1]}</td><td>${row[2]}</td><td>${row[3]}</td><td>${row[4]}</td></tr>`).join('');
             let div = document.createElement('div');
             div.innerHTML = `<h3>Laporan Kas ${daftarBulan[bulan-1]}</h3><table border="1"><thead><tr><th>Tgl</th><th>Uraian</th><th>Ket</th><th>Debit</th><th>Kredit</th></tr></thead><tbody>${rows}</tbody></table>`;
