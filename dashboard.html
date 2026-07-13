@@ -10,7 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
         if (!sessionStorage.getItem("isLoggedIn")) window.location.href = "index.html";
-        const API_URL = "https://script.google.com/macros/s/AKfycbzg4PxbVIoSdHT5XXbPkpC5UaW2KMRVmnzMPZ5NciGL5ndX48e2NPKYMWO8o4PBB3hT8A/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbzMgUIm3kte2XkC-70LM6hcn3FYX5rvvx0PByu9targzIifhrbX8exr6ULOhkdNVDTGlQ/exec";
     </script>
 </head>
 <body class="bg-slate-50 flex min-h-screen">
@@ -33,10 +33,7 @@
         </div>
 
         <div class="mb-6">
-            <select id="bulanFilter" class="p-3 bg-white border border-teal-200 rounded-xl text-teal-900 font-bold cursor-pointer">
-                <option value="5">Mei 2026</option>
-                <option value="6">Juni 2026</option>
-            </select>
+            <select id="bulanFilter" class="p-3 bg-white border border-teal-200 rounded-xl text-teal-900 font-bold cursor-pointer"></select>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
@@ -48,9 +45,7 @@
                     <tr class="bg-teal-900 text-white p-4 rounded-xl"><td>Saldo Akhir</td><td id="val-akhir" class="text-right font-bold">15,711,218</td></tr>
                 </table>
             </div>
-            <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
-                <canvas id="kasChart"></canvas>
-            </div>
+            <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100"><canvas id="kasChart"></canvas></div>
         </div>
 
         <div id="input-section" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 mb-10">
@@ -68,16 +63,44 @@
         <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
             <input type="text" id="searchInput" onkeyup="filterTabel()" placeholder="Cari Uraian..." class="w-full p-4 mb-4 border rounded-xl">
             <table class="w-full text-left">
-                <thead><tr class="border-b"><th>Tanggal</th><th>Uraian</th><th>Keterangan</th><th>Debit</th><th>Kredit</th></tr></thead>
+                <thead><tr class="border-b text-slate-500"><th class="p-3">Tanggal</th><th class="p-3">Uraian</th><th class="p-3">Keterangan</th><th class="p-3">Debit</th><th class="p-3">Kredit</th></tr></thead>
                 <tbody id="tabel-riwayat"></tbody>
+                <tfoot class="bg-slate-100 font-bold"><tr class="border-t"><td colspan="3" class="p-3 text-right">TOTAL</td><td id="total-debit" class="p-3 text-red-600">Rp 0</td><td id="total-kredit" class="p-3 text-green-600">Rp 0</td></tr></tfoot>
             </table>
+            <div id="pagination" class="flex justify-center gap-2 mt-6"></div>
         </div>
     </main>
 
     <script>
-        // Logika Chart dan Fungsi lainnya tetap sama
-        const ctx = document.getElementById('kasChart').getContext('2d');
-        let kasChart = new Chart(ctx, { type: 'bar', data: { labels: ['Kredit', 'Debit'], datasets: [{ data: [47863000, 48304763], backgroundColor: ['#15803d', '#be123c'] }] } });
+        // Inisialisasi Bulan
+        const daftarBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+        const select = document.getElementById('bulanFilter');
+        daftarBulan.forEach((m, i) => { select.innerHTML += `<option value="${i+1}">${m} 2026</option>`; });
+
+        // Chart & Data
+        let kasChart = new Chart(document.getElementById('kasChart').getContext('2d'), { type: 'bar', data: { labels: ['Kredit', 'Debit'], datasets: [{ data: [47863000, 48304763], backgroundColor: ['#15803d', '#be123c'] }] } });
+
+        async function loadRiwayat(page = 1) {
+            const res = await fetch(`${API_URL}?action=getRiwayat&page=${page}`);
+            const resData = await res.json();
+            let sumD = 0, sumK = 0;
+            document.getElementById('tabel-riwayat').innerHTML = resData.data.map(row => {
+                sumD += parseFloat(row[3] || 0); sumK += parseFloat(row[4] || 0);
+                return `<tr class="border-b"><td class="p-3">${row[0]}</td><td class="p-3">${row[1]}</td><td class="p-3">${row[2]}</td><td class="p-3 text-red-600">${row[3]?Number(row[3]).toLocaleString():'-'}</td><td class="p-3 text-green-600">${row[4]?Number(row[4]).toLocaleString():'-'}</td></tr>`;
+            }).join('');
+            document.getElementById('total-debit').innerText = 'Rp ' + sumD.toLocaleString();
+            document.getElementById('total-kredit').innerText = 'Rp ' + sumK.toLocaleString();
+        }
+
+        async function exportPDF() {
+            const { jsPDF } = window.jspdf;
+            const canvas = await html2canvas(document.querySelector('main'), { scale: 2 });
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const w = pdf.internal.pageSize.getWidth();
+            pdf.addImage(imgData, 'PNG', 0, 0, w, (canvas.height * w) / canvas.width);
+            pdf.save("Laporan_Kas_MWW.pdf");
+        }
 
         document.getElementById('form-transaksi').onsubmit = (e) => {
             e.preventDefault();
@@ -87,26 +110,13 @@
             fd.append('ket', document.getElementById('ket').value);
             fd.append('jenis', document.getElementById('jenis').value);
             fd.append('jml', document.getElementById('jml').value);
-            fetch(API_URL, {method: 'POST', body: fd}).then(() => {
-                alert("Berhasil!");
-                location.reload();
-            });
+            fetch(API_URL, {method: 'POST', body: fd}).then(() => { alert("Berhasil!"); location.reload(); });
         };
 
-        async function loadRiwayat() {
-            const res = await fetch(API_URL + "?action=getRiwayat");
-            const data = await res.json();
-            document.getElementById('tabel-riwayat').innerHTML = data.data.map(row => `
-                <tr class="border-b"><td>${row[0]}</td><td>${row[1]}</td><td>${row[2]}</td><td class="text-red-600">${row[3]}</td><td class="text-green-600">${row[4]}</td></tr>
-            `).join('');
-        }
-        
         function filterTabel() {
             let input = document.getElementById("searchInput").value.toLowerCase();
             let tr = document.getElementById("tabel-riwayat").getElementsByTagName("tr");
-            for (let i = 0; i < tr.length; i++) {
-                tr[i].style.display = tr[i].getElementsByTagName("td")[1].innerText.toLowerCase().indexOf(input) > -1 ? "" : "none";
-            }
+            for (let i = 0; i < tr.length; i++) { tr[i].style.display = tr[i].getElementsByTagName("td")[1].innerText.toLowerCase().indexOf(input) > -1 ? "" : "none"; }
         }
 
         loadRiwayat();
