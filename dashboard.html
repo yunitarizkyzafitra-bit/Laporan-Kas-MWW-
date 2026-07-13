@@ -10,7 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
         if (!sessionStorage.getItem("isLoggedIn")) window.location.href = "index.html";
-        const API_URL = "https://script.google.com/macros/s/AKfycby9_t2e_yj4czkn6Bl7IvPu-5hXw_Da-gfv46HfSlTyiSrqWKV2jiJjG3ZP-YLtkRIlBg/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbzg4PxbVIoSdHT5XXbPkpC5UaW2KMRVmnzMPZ5NciGL5ndX48e2NPKYMWO8o4PBB3hT8A/exec";
     </script>
 </head>
 <body class="bg-slate-50 flex min-h-screen">
@@ -21,6 +21,7 @@
         </div>
         <nav class="space-y-3 flex-grow">
             <a href="#" class="block p-4 bg-teal-900 rounded-2xl font-semibold"><i class="fa fa-chart-line mr-3"></i> Dashboard</a>
+            <a href="#input-section" class="block p-4 hover:bg-teal-700 rounded-2xl transition"><i class="fa fa-plus-circle mr-3"></i> Tambah Kas</a>
         </nav>
         <button onclick="sessionStorage.clear(); window.location.href='index.html';" class="text-red-300 hover:text-white transition mt-auto"><i class="fa fa-sign-out mr-2"></i> Logout</button>
     </aside>
@@ -31,8 +32,29 @@
             <button onclick="exportPDF()" class="bg-teal-900 text-white px-6 py-3 rounded-xl hover:bg-teal-800 transition"><i class="fa fa-file-pdf mr-2"></i> Export PDF</button>
         </div>
 
+        <div class="mb-6">
+            <select id="bulanFilter" class="p-3 bg-white border border-teal-200 rounded-xl text-teal-900 font-bold cursor-pointer">
+                <option value="5">Mei 2026</option>
+                <option value="6">Juni 2026</option>
+            </select>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+            <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
+                <table class="w-full text-left">
+                    <tr><td>Saldo Awal</td><td id="val-awal" class="text-right font-bold">16,152,981</td></tr>
+                    <tr class="text-green-700"><td>Total Kredit</td><td id="val-kredit" class="text-right font-bold">47,863,000</td></tr>
+                    <tr class="text-red-700"><td>Total Debit</td><td id="val-debit" class="text-right font-bold">48,304,763</td></tr>
+                    <tr class="bg-teal-900 text-white p-4 rounded-xl"><td>Saldo Akhir</td><td id="val-akhir" class="text-right font-bold">15,711,218</td></tr>
+                </table>
+            </div>
+            <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
+                <canvas id="kasChart"></canvas>
+            </div>
+        </div>
+
         <div id="input-section" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 mb-10">
-            <h3 class="font-bold text-xl mb-6 text-teal-900">Tambah Transaksi</h3>
+            <h3 class="font-bold text-xl mb-6 text-teal-900">Input Transaksi Baru</h3>
             <form id="form-transaksi" class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <input type="date" id="tgl" required class="p-4 bg-slate-50 rounded-xl border">
                 <input type="text" id="uraian" placeholder="Uraian" required class="p-4 bg-slate-50 rounded-xl border">
@@ -44,23 +66,21 @@
         </div>
 
         <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
-            <div class="flex justify-between mb-6">
-                <h3 class="font-bold text-xl text-teal-900">Riwayat Transaksi</h3>
-                <input type="text" id="searchInput" onkeyup="filterTabel()" placeholder="Cari Uraian..." class="p-2 border rounded-xl w-64">
-            </div>
+            <input type="text" id="searchInput" onkeyup="filterTabel()" placeholder="Cari Uraian..." class="w-full p-4 mb-4 border rounded-xl">
             <table class="w-full text-left">
-                <thead><tr class="text-slate-400 border-b"><th>Tanggal</th><th>Uraian</th><th>Keterangan</th><th>Debit</th><th>Kredit</th></tr></thead>
+                <thead><tr class="border-b"><th>Tanggal</th><th>Uraian</th><th>Keterangan</th><th>Debit</th><th>Kredit</th></tr></thead>
                 <tbody id="tabel-riwayat"></tbody>
             </table>
-            <div id="pagination" class="flex justify-center gap-2 mt-6"></div>
         </div>
     </main>
 
     <script>
+        // Logika Chart dan Fungsi lainnya tetap sama
+        const ctx = document.getElementById('kasChart').getContext('2d');
+        let kasChart = new Chart(ctx, { type: 'bar', data: { labels: ['Kredit', 'Debit'], datasets: [{ data: [47863000, 48304763], backgroundColor: ['#15803d', '#be123c'] }] } });
+
         document.getElementById('form-transaksi').onsubmit = (e) => {
             e.preventDefault();
-            const btn = document.getElementById('btn-save');
-            btn.innerText = "MENGIRIM...";
             const fd = new FormData();
             fd.append('tgl', document.getElementById('tgl').value);
             fd.append('uraian', document.getElementById('uraian').value);
@@ -69,20 +89,18 @@
             fd.append('jml', document.getElementById('jml').value);
             fetch(API_URL, {method: 'POST', body: fd}).then(() => {
                 alert("Berhasil!");
-                btn.innerText = "SIMPAN DATA";
-                document.getElementById('form-transaksi').reset();
-                loadRiwayat();
+                location.reload();
             });
         };
 
-        async function loadRiwayat(page = 1) {
-            const res = await fetch(`${API_URL}?action=getRiwayat&page=${page}`);
-            const resData = await res.json();
-            document.getElementById('tabel-riwayat').innerHTML = resData.data.map(row => `
+        async function loadRiwayat() {
+            const res = await fetch(API_URL + "?action=getRiwayat");
+            const data = await res.json();
+            document.getElementById('tabel-riwayat').innerHTML = data.data.map(row => `
                 <tr class="border-b"><td>${row[0]}</td><td>${row[1]}</td><td>${row[2]}</td><td class="text-red-600">${row[3]}</td><td class="text-green-600">${row[4]}</td></tr>
             `).join('');
         }
-
+        
         function filterTabel() {
             let input = document.getElementById("searchInput").value.toLowerCase();
             let tr = document.getElementById("tabel-riwayat").getElementsByTagName("tr");
@@ -90,7 +108,7 @@
                 tr[i].style.display = tr[i].getElementsByTagName("td")[1].innerText.toLowerCase().indexOf(input) > -1 ? "" : "none";
             }
         }
-        
+
         loadRiwayat();
     </script>
 </body>
