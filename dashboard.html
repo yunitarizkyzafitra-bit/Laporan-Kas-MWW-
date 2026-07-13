@@ -11,7 +11,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
         if (!sessionStorage.getItem("isLoggedIn")) window.location.href = "index.html";
-        const API_URL = "https://script.google.com/macros/s/AKfycbxYYcx0R7tSYEhooTsfiHwA0LcTlagWAlJuvLi3hHP6n9RDN4J_Ay39QdKf--JtB2k9sw/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbzUn150WJ0bOMSro96T8UPyljlddE241M7p1p1Jr1n5_bENvKs8vsvPayomW27XMN-Yhg/exec";
     </script>
     <style>
         @media (max-width: 768px) { .table-container { overflow-x: auto; } }
@@ -67,11 +67,11 @@
         <div id="input-section" class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100 mb-10">
             <h3 class="font-bold text-xl mb-6 text-teal-900">Input Transaksi Baru</h3>
             <form id="form-transaksi" class="grid grid-cols-1 gap-4">
-                <input type="date" id="tgl" required class="p-4 bg-slate-50 rounded-xl border w-full">
-                <input type="text" id="uraian" placeholder="Uraian" required class="p-4 bg-slate-50 rounded-xl border w-full">
-                <input type="text" id="ket" placeholder="Keterangan" required class="p-4 bg-slate-50 rounded-xl border w-full">
-                <select id="jenis" class="p-4 bg-slate-50 rounded-xl border w-full"><option value="Kredit">Kredit</option><option value="Debit">Debit</option></select>
-                <input type="number" id="jml" placeholder="Jumlah" required class="p-4 bg-slate-50 rounded-xl border w-full">
+                <input type="date" id="tgl" name="tgl" required class="p-4 bg-slate-50 rounded-xl border w-full">
+                <input type="text" id="uraian" name="uraian" placeholder="Uraian" required class="p-4 bg-slate-50 rounded-xl border w-full">
+                <input type="text" id="ket" name="ket" placeholder="Keterangan" required class="p-4 bg-slate-50 rounded-xl border w-full">
+                <select id="jenis" name="jenis" class="p-4 bg-slate-50 rounded-xl border w-full"><option value="Kredit">Kredit</option><option value="Debit">Debit</option></select>
+                <input type="number" id="jml" name="jml" placeholder="Jumlah" required class="p-4 bg-slate-50 rounded-xl border w-full">
                 <button type="submit" id="btn-save" class="bg-teal-800 text-white rounded-xl font-bold p-4 hover:bg-teal-900 transition">SIMPAN DATA</button>
             </form>
         </div>
@@ -85,7 +85,6 @@
                     <tfoot class="bg-slate-100 font-bold"><tr class="border-t"><td colspan="3" class="p-3 text-right">TOTAL</td><td id="total-debit" class="p-3 text-red-600">Rp 0</td><td id="total-kredit" class="p-3 text-green-600">Rp 0</td></tr></tfoot>
                 </table>
             </div>
-            <div id="pagination" class="flex flex-wrap justify-center gap-2 mt-6"></div>
         </div>
     </main>
 
@@ -93,53 +92,35 @@
         const daftarBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
         const select = document.getElementById('bulanFilter');
         daftarBulan.forEach((m, i) => { select.innerHTML += `<option value="${i+1}">${m} 2026</option>`; });
-        select.value = 5; // Default Mei
+        select.value = new Date().getMonth() + 1;
 
         let kasChart = new Chart(document.getElementById('kasChart').getContext('2d'), { type: 'bar', data: { labels: ['Kredit', 'Debit'], datasets: [{ data: [0, 0], backgroundColor: ['#15803d', '#be123c'] }] } });
 
-        async function loadRiwayat(page = 1) {
-            const bulan = document.getElementById('bulanFilter').value;
-            try {
-                const res = await fetch(`${API_URL}?action=getRiwayat&bulan=${bulan}`);
-                const resData = await res.json();
-                let sumD = 0, sumK = 0;
-                
-                if (resData.data && resData.data.length > 0) {
-                    document.getElementById('tabel-riwayat').innerHTML = resData.data.map(row => {
-                        sumD += parseFloat(row[3] || 0); sumK += parseFloat(row[4] || 0);
-                        return `<tr class="border-b"><td class="p-3">${row[0]}</td><td class="p-3">${row[1]}</td><td class="p-3">${row[2]}</td><td class="p-3 text-red-600">${Number(row[3]).toLocaleString()}</td><td class="p-3 text-green-600">${Number(row[4]).toLocaleString()}</td></tr>`;
-                    }).join('');
-                }
-                
-                document.getElementById('total-debit').innerText = 'Rp ' + sumD.toLocaleString();
-                document.getElementById('total-kredit').innerText = 'Rp ' + sumK.toLocaleString();
-                document.getElementById('val-debit').innerText = sumD.toLocaleString();
-                document.getElementById('val-kredit').innerText = sumK.toLocaleString();
-                document.getElementById('val-akhir').innerText = (16152981 + sumK - sumD).toLocaleString();
-                
-                kasChart.data.datasets[0].data = [sumK, sumD];
-                kasChart.update();
-            } catch(e) { console.error("Gagal memuat data", e); }
-        }
-
-        async function exportPDF() {
+        async function loadRiwayat() {
             const bulan = document.getElementById('bulanFilter').value;
             const res = await fetch(`${API_URL}?action=getRiwayat&bulan=${bulan}`);
             const resData = await res.json();
-            if(!resData.data) return;
+            let sumD = 0, sumK = 0;
             
-            let rows = resData.data.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td></tr>`).join('');
-            let div = document.createElement('div');
-            div.style.padding = '20px';
-            div.innerHTML = `<h3>Laporan Kas ${daftarBulan[bulan-1]} 2026</h3><table border="1" width="100%">${rows}</table>`;
-            document.body.appendChild(div);
+            if (resData.data) {
+                document.getElementById('tabel-riwayat').innerHTML = resData.data.map(row => {
+                    sumD += parseFloat(row[3]) || 0;
+                    sumK += parseFloat(row[4]) || 0;
+                    return `<tr class="border-b"><td class="p-3">${row[0]}</td><td class="p-3">${row[1]}</td><td class="p-3">${row[2]}</td><td class="p-3 text-red-600">${Number(row[3]).toLocaleString()}</td><td class="p-3 text-green-600">${Number(row[4]).toLocaleString()}</td></tr>`;
+                }).join('');
+            }
             
-            const canvas = await html2canvas(div);
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF();
-            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 10, 180, 0);
-            pdf.save("Laporan_Kas.pdf");
-            document.body.removeChild(div);
+            const total = sumD + sumK;
+            document.getElementById('stat-kredit-pct').innerText = total > 0 ? Math.round((sumK/total)*100) + '%' : '0%';
+            document.getElementById('stat-debit-pct').innerText = total > 0 ? Math.round((sumD/total)*100) + '%' : '0%';
+            document.getElementById('total-debit').innerText = 'Rp ' + sumD.toLocaleString();
+            document.getElementById('total-kredit').innerText = 'Rp ' + sumK.toLocaleString();
+            document.getElementById('val-debit').innerText = sumD.toLocaleString();
+            document.getElementById('val-kredit').innerText = sumK.toLocaleString();
+            document.getElementById('val-akhir').innerText = (16152981 + sumK - sumD).toLocaleString();
+            
+            kasChart.data.datasets[0].data = [sumK, sumD];
+            kasChart.update();
         }
 
         document.getElementById('form-transaksi').onsubmit = (e) => {
