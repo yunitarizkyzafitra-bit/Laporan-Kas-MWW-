@@ -10,7 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
         if (!sessionStorage.getItem("isLoggedIn")) window.location.href = "index.html";
-        const API_URL = "https://script.google.com/macros/s/AKfycbzMgUIm3kte2XkC-70LM6hcn3FYX5rvvx0PByu9targzIifhrbX8exr6ULOhkdNVDTGlQ/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbxFySkRZming9MTmpAybGcBuQizBA_YtcG8Bj91MWdM8lU-m3FAuxpbUv0ZYiA_bsfr0Q/exec";
     </script>
 </head>
 <body class="bg-slate-50 flex min-h-screen">
@@ -33,16 +33,17 @@
         </div>
 
         <div class="mb-6">
-            <select id="bulanFilter" class="p-3 bg-white border border-teal-200 rounded-xl text-teal-900 font-bold cursor-pointer"></select>
+            <select id="bulanFilter" onchange="loadRiwayat(1)" class="p-3 bg-white border border-teal-200 rounded-xl text-teal-900 font-bold cursor-pointer">
+            </select>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
             <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
                 <table class="w-full text-left">
-                    <tr><td>Saldo Awal</td><td id="val-awal" class="text-right font-bold">16,152,981</td></tr>
-                    <tr class="text-green-700"><td>Total Kredit</td><td id="val-kredit" class="text-right font-bold">47,863,000</td></tr>
-                    <tr class="text-red-700"><td>Total Debit</td><td id="val-debit" class="text-right font-bold">48,304,763</td></tr>
-                    <tr class="bg-teal-900 text-white p-4 rounded-xl"><td>Saldo Akhir</td><td id="val-akhir" class="text-right font-bold">15,711,218</td></tr>
+                    <tr><td>Saldo Awal</td><td class="text-right font-bold">16,152,981</td></tr>
+                    <tr class="text-green-700"><td>Total Kredit</td><td class="text-right font-bold">47,863,000</td></tr>
+                    <tr class="text-red-700"><td>Total Debit</td><td class="text-right font-bold">48,304,763</td></tr>
+                    <tr class="bg-teal-900 text-white p-4 rounded-xl"><td>Saldo Akhir</td><td class="text-right font-bold">15,711,218</td></tr>
                 </table>
             </div>
             <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100"><canvas id="kasChart"></canvas></div>
@@ -65,23 +66,23 @@
             <table class="w-full text-left">
                 <thead><tr class="border-b text-slate-500"><th class="p-3">Tanggal</th><th class="p-3">Uraian</th><th class="p-3">Keterangan</th><th class="p-3">Debit</th><th class="p-3">Kredit</th></tr></thead>
                 <tbody id="tabel-riwayat"></tbody>
-                <tfoot class="bg-slate-100 font-bold"><tr class="border-t"><td colspan="3" class="p-3 text-right">TOTAL</td><td id="total-debit" class="p-3 text-red-600">Rp 0</td><td id="total-kredit" class="p-3 text-green-600">Rp 0</td></tr></tfoot>
+                <tfoot class="bg-slate-100 font-bold"><tr class="border-t"><td colspan="3" class="p-3 text-right">TOTAL (Per Page)</td><td id="total-debit" class="p-3 text-red-600">Rp 0</td><td id="total-kredit" class="p-3 text-green-600">Rp 0</td></tr></tfoot>
             </table>
             <div id="pagination" class="flex justify-center gap-2 mt-6"></div>
         </div>
     </main>
 
     <script>
-        // Inisialisasi Bulan
         const daftarBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
         const select = document.getElementById('bulanFilter');
         daftarBulan.forEach((m, i) => { select.innerHTML += `<option value="${i+1}">${m} 2026</option>`; });
+        select.value = new Date().getMonth() + 1;
 
-        // Chart & Data
         let kasChart = new Chart(document.getElementById('kasChart').getContext('2d'), { type: 'bar', data: { labels: ['Kredit', 'Debit'], datasets: [{ data: [47863000, 48304763], backgroundColor: ['#15803d', '#be123c'] }] } });
 
         async function loadRiwayat(page = 1) {
-            const res = await fetch(`${API_URL}?action=getRiwayat&page=${page}`);
+            const bulan = document.getElementById('bulanFilter').value;
+            const res = await fetch(`${API_URL}?action=getRiwayat&page=${page}&bulan=${bulan}`);
             const resData = await res.json();
             let sumD = 0, sumK = 0;
             document.getElementById('tabel-riwayat').innerHTML = resData.data.map(row => {
@@ -90,15 +91,18 @@
             }).join('');
             document.getElementById('total-debit').innerText = 'Rp ' + sumD.toLocaleString();
             document.getElementById('total-kredit').innerText = 'Rp ' + sumK.toLocaleString();
+            
+            const pagDiv = document.getElementById('pagination');
+            pagDiv.innerHTML = Array.from({length: resData.total}, (_, i) => i + 1)
+                .map(p => `<button onclick="loadRiwayat(${p})" class="px-4 py-2 ${p===page?'bg-teal-900':'bg-teal-700'} text-white rounded-lg mx-1">${p}</button>`).join('');
         }
 
         async function exportPDF() {
             const { jsPDF } = window.jspdf;
             const canvas = await html2canvas(document.querySelector('main'), { scale: 2 });
-            const imgData = canvas.toDataURL('image/png');
             const pdf = new jsPDF('p', 'mm', 'a4');
             const w = pdf.internal.pageSize.getWidth();
-            pdf.addImage(imgData, 'PNG', 0, 0, w, (canvas.height * w) / canvas.width);
+            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, w, (canvas.height * w) / canvas.width);
             pdf.save("Laporan_Kas_MWW.pdf");
         }
 
