@@ -2,27 +2,38 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Meta tag ini memastikan aplikasi mengikuti lebar layar perangkat (Responsive) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Login - Aplikasi Kas MWW</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Memastikan elemen form tetap proporsional di PC namun nyaman di HP */
+        body { margin: 0; padding: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    </style>
 </head>
 <body class="bg-teal-50 font-sans">
 
-    <div class="min-h-screen flex flex-col items-center justify-center p-4">
+    <!-- Container Utama -->
+    <div class="w-full max-w-sm p-6 flex flex-col items-center">
         <img src="https://raw.githubusercontent.com/yunitarizkyzafitra-bit/Laporan-Kas-MWW-/main/logo-mww.png" 
              alt="Logo MWW" 
-             class="w-20 h-20 mb-3 object-contain">
+             class="w-20 h-20 mb-6 object-contain">
              
-        <form id="form-login" class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm border border-teal-100">
-            <input type="text" id="login-username" placeholder="Username" required class="w-full p-3 mb-4 bg-slate-50 border rounded-xl text-xs font-bold">
+        <form id="form-login" class="bg-white p-8 rounded-2xl shadow-xl w-full border border-teal-100">
+            <input type="text" id="login-username" placeholder="Username" required 
+                   class="w-full p-4 mb-4 bg-slate-50 border rounded-xl text-sm font-bold focus:ring-2 focus:ring-teal-500 outline-none">
             
             <div class="relative mb-6">
-                <input type="password" id="login-password" placeholder="Password" required class="w-full p-3 bg-slate-50 border rounded-xl text-xs font-bold">
-                <i id="icon-mata" class="fa-solid fa-eye absolute right-4 top-4 cursor-pointer text-slate-400" onclick="togglePassword()"></i>
+                <input type="password" id="login-password" placeholder="Password" required 
+                       class="w-full p-4 bg-slate-50 border rounded-xl text-sm font-bold focus:ring-2 focus:ring-teal-500 outline-none">
+                <i id="icon-mata" class="fa-solid fa-eye absolute right-4 top-5 cursor-pointer text-slate-400" onclick="togglePassword()"></i>
             </div>
             
-            <button type="submit" class="w-full bg-teal-600 text-white font-bold p-3 rounded-xl text-xs uppercase hover:bg-teal-700 transition">MASUK</button>
+            <button type="submit" 
+                    class="w-full bg-teal-600 text-white font-bold p-4 rounded-xl text-sm uppercase hover:bg-teal-700 transition active:scale-95">
+                MASUK
+            </button>
         </form>
     </div>
 
